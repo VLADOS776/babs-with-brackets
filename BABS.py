@@ -1,4 +1,4 @@
-#
+﻿#
 # Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
 #
 # Better ABsolute Scanner based on default scanner code from PMS 0.9.3.5 for Ubuntu
@@ -24,7 +24,8 @@ from mp4file import mp4file, atomsearch
 episode_regexps = [
     '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*[eE](?P<ep>[0-9]+)([- ]?[Ee+](?P<secondEp>[0-9]+))?',                           # S03E04-E05
     '(?P<show>.*?)[sS](?P<season>[0-9]{2})[\._\- ]+(?P<ep>[0-9]+)',                                                            # S03-03
-    '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?'                        # 3x03
+    '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?',                       # 3x03
+	  '(?P<show>.*?)_\[(?P<ep>[0-9]{2,4})\]_'                                                                                    # _[02]_
   ]
 # BABS -- Removed the ".602." expresion from the list above. See default scanner to recover it.
 
@@ -46,7 +47,8 @@ just_episode_regexs = [
     '(^|[ \.\-_])e(p{0,1}|(pisode){0,1})[ \.\-_]*(?P<ep>[0-9]{2,3})([^0-9c-uw-z%]|$)', # Blah Blah ep234
     '.*?[ \.\-_](?P<ep>[0-9]{2,3})[^0-9c-uw-z%]+',         # Flah - 04 - Blah
     '.*?[ \.\-_](?P<ep>[0-9]{2,3})$',                      # Flah - 04
-    '.*?[^0-9x](?P<ep>[0-9]{2,3})$'                        # Flah707
+    '.*?[^0-9x](?P<ep>[0-9]{2,3})$',                       # Flah707
+    '.*?_\[(?P<ep>[0-9]{2,3})\]'                           # blah_blah_[02]
   ]
 # BABS -- modified "Blah Blah ep234" expression to only look for e, ep, or episode -- original scanner looked for e followed by 0 or more a-z
 
@@ -83,7 +85,9 @@ def Scan(path, files, mediaList, subdirs):
           
           # Extract data.
           show = match.group('show')
-          season = int(match.group('season'))
+          season = 1
+          if match.groupdict().has_key('season') and match.group('season'):
+            season = int(match.group('season'))
           episode = int(match.group('ep'))
           endEpisode = episode
           if match.groupdict().has_key('secondEp') and match.group('secondEp'):
@@ -288,7 +292,9 @@ def Scan(path, files, mediaList, subdirs):
               print "BABS: matched episode_regexps ", rx
 
               # Parse season and episode.
-              the_season = int(match.group('season'))
+              the_season = 1
+              if match.groupdict().has_key('season') and match.group('season'):
+                the_season = int(match.group('season'))
               episode = int(match.group('ep'))
               endEpisode = episode
               if match.groupdict().has_key('secondEp') and match.group('secondEp'):
