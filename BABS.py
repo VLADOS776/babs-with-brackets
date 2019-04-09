@@ -1,4 +1,4 @@
-﻿#
+#
 # Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
 #
 # Better ABsolute Scanner based on default scanner code from PMS 0.9.3.5 for Ubuntu
@@ -295,7 +295,7 @@ def Scan(path, files, mediaList, subdirs):
               logging.debug("BABS: matched episode_regexps %s", rx)
 
               # Parse season and episode.
-              the_season = 1
+              the_season = seasonNumber or 1
               if match.groupdict().has_key('season') and match.group('season'):
                 the_season = int(match.group('season'))
               episode = int(match.group('ep'))
