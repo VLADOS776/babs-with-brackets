@@ -1,4 +1,4 @@
-#
+﻿#
 # Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
 #
 # Better ABsolute Scanner based on default scanner code from PMS 0.9.3.5 for Ubuntu
@@ -17,9 +17,12 @@
 # all debug messages are left in -- will only show on console -- include BABS: at beginning of line
 # all changes except debug messages are called out with comments begining # BABS -- 
 #
-import re, os, os.path
+import re, os, inspect, logging, os.path
 import Media, VideoFiles, Stack, Utils
 from mp4file import mp4file, atomsearch
+
+LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", "..", "Logs"))
+logging.basicConfig(filename=os.path.join(LOG_PATH, 'BABS.log'), level=logging.DEBUG)
 
 episode_regexps = [
     '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*[eE](?P<ep>[0-9]+)([- ]?[Ee+](?P<secondEp>[0-9]+))?',                           # S03E04-E05
@@ -59,7 +62,7 @@ ends_with_episode = ['[ ]*[0-9]{1,2}x[0-9]{1,3}$', '[ ]*S[0-9]+E[0-9]+$']
 # Look for episodes.
 def Scan(path, files, mediaList, subdirs):
 
-  print "BABS: Scan"
+  logging.debug("BABS: Scan logging debug")
   
   # Scan for video files.
   VideoFiles.Scan(path, files, mediaList, subdirs)
@@ -69,19 +72,19 @@ def Scan(path, files, mediaList, subdirs):
   
   if len(paths) == 1 and len(paths[0]) == 0:
 
-    print "BABS: len(paths) == 1 and len(paths[0]) == 0"
+    logging.debug("BABS: len(paths) == 1 and len(paths[0]) == 0")
   
     # Run the select regexps we allow at the top level.
     for i in files:
       file = os.path.basename(i)
 
-      print "BABS: tlrs os.path.basename, i = |", i, "| file = |", file, "|"
+      logging.debug("BABS: tlrs os.path.basename, i = |%s| file = |%s|", i, file)
 
       for rx in episode_regexps[0:-1]:
         match = re.search(rx, file, re.IGNORECASE)
         if match:
 
-          print "BABS: matched episode_regexps: ", rx
+          logging.debug("BABS: matched episode_regexps: %s", rx)
           
           # Extract data.
           show = match.group('show')
@@ -103,7 +106,7 @@ def Scan(path, files, mediaList, subdirs):
   
   elif len(paths) > 0 and len(paths[0]) > 0:
 
-    print "BABS: len(paths) > 0 and len(paths[0]) > 0"
+    logging.debug("BABS: len(paths) > 0 and len(paths[0]) > 0")
 
     done = False
         
@@ -113,7 +116,7 @@ def Scan(path, files, mediaList, subdirs):
         res = re.findall(rx, paths[-1])
         if len(res):
 
-          print "BABS: match on standalone_episode_regexs ", rx
+          logging.debug("BABS: match on standalone_episode_regexs %s", rx)
 
           show, junk, year, season, episode, junk, endEpisode, junk, title = res[0]
           
@@ -121,7 +124,7 @@ def Scan(path, files, mediaList, subdirs):
           if len(show) == 0:
             (show, year) = VideoFiles.CleanName(paths[0])
 
-            print "BABS: standalone, show from directory, show = |", show, "| year = |", year, "|"
+            logging.debug("BABS: standalone, show from directory, show = |%s| year = |%s|", show, year)
             
           episode = int(episode)
           if len(endEpisode) > 0:
@@ -146,41 +149,41 @@ def Scan(path, files, mediaList, subdirs):
 
       (show, year) = VideoFiles.CleanName(paths[0])
 
-      print "BABS: not perfect match: show = |", show, "| year = |", year, "|"
+      logging.debug("BABS: not perfect match: show = |%s| year = |%s|", show, year)
       
       # Which component looks like season?
       if len(paths) >= 2:
 
-        print "BABS: len(paths) >= 2"
+        logging.debug("BABS: len(paths) >= 2")
 
         season = paths[len(paths)-1]
         match = re.match(season_regex, season, re.IGNORECASE)
         if match:
           seasonNumber = int(match.group('season'))
 
-          print "BABS: matched season_regex with season = |", season, "| seasonNumber =", seasonNumber 
+          logging.debug("BABS: matched season_regex with season = |%s| seasonNumber =%s", season, seasonNumber)
 
-      print "BABS: before ends_with_episode, show = |", show, "|"
+      logging.debug("BABS: before ends_with_episode, show = |%s|", show)
 
       # Make sure an episode name didn't make it into the show.
       for rx in ends_with_episode:
         show = re.sub(rx, '', show)
 
-      print "BABS: after ends_with_episode, show = |", show, "|"
+      logging.debug("BABS: after ends_with_episode, show = |%s|", show)
 
       for i in files:
         done = False
         file = os.path.basename(i)
 
-        print "BABS: os.path.basename, i = |", i, "| file = |", file, "|"
+        logging.debug("BABS: os.path.basename, i = |%s| file = |%s|", i, file)
 
         (file, ext) = os.path.splitext(file)
 
-        print "BABS: os.path.splitext, file = |", file, "| ext = |", ext, "|"
+        logging.debug("BABS: os.path.splitext, file = |%s| ext = |%s|", file, ext)
         
         if ext.lower() in ['.mp4', '.m4v', '.mov']:
 
-          print "BABS: try mp4 tags"
+          logging.debug("BABS: try mp4 tags")
 
           m4season = m4ep = m4year = 0
           m4show = title = ''
@@ -250,7 +253,7 @@ def Scan(path, files, mediaList, subdirs):
           match = re.search(rx, file)
           if match:
 
-            print "BABS: matched date_regexps ", rx
+            logging.debug("BABS: matched date_regexps %s", rx)
 
             year = int(match.group('year'))
             month = int(match.group('month'))
@@ -270,26 +273,26 @@ def Scan(path, files, mediaList, subdirs):
           # Take the year out, because it's not going to help at this point.
           cleanName, cleanYear = VideoFiles.CleanName(file)
 
-          print "BABS: after CleanName file = |", file, "| cleanName = |", cleanName, "| cleanYear = |", cleanYear, "|"
+          logging.debug("BABS: after CleanName file = |%s| cleanName = |%s| cleanYear = |%s|", file, cleanName, cleanYear)
 
           if cleanYear != None:
             file = file.replace(str(cleanYear), 'XXXX')
 
-            print "BABS: replaced year, file = |", file, "|"
+            logging.debug("BABS: replaced year, file = |%s|", file)
           
           # Minor cleaning on the file to avoid false matches on H.264, 720p, etc.
           whackRx = ['([hHx][\.]?264)[^0-9]', '[^[0-9](720[pP])', '[^[0-9](1080[pP])', '[^[0-9](480[pP])']
           for rx in whackRx:
             file = re.sub(rx, ' ', file)
 
-          print "BABS: after whackRx, file = |", file, "|"
+          logging.debug("BABS: after whackRx, file = |%s|", file)
           
           for rx in episode_regexps:
             
             match = re.search(rx, file, re.IGNORECASE)
             if match:
 
-              print "BABS: matched episode_regexps ", rx
+              logging.debug("BABS: matched episode_regexps %s", rx)
 
               # Parse season and episode.
               the_season = 1
@@ -336,11 +339,11 @@ def Scan(path, files, mediaList, subdirs):
               
         if done == False:
 
-          print "BABS: dealing with episode? file = |", file, "|"
+          logging.debug("BABS: dealing with episode? file = |%s|", file)
 
           # BABS -- Before we do CleanName, which will remove any dashes, etc. in filename, attempt to remove series name found in directory
           file = re.sub(show, 'X', file)
-          print "BABS: before CleanName, remove show, show = |", show, "| file = |", file, "|"
+          logging.debug("BABS: before CleanName, remove show, show = |%s| file = |%s|", show, file)
 
           # OK, next let's see if we're dealing with something that looks like an episode.
           # Begin by cleaning the filename to remove garbage like "h.264" that could throw
@@ -348,35 +351,35 @@ def Scan(path, files, mediaList, subdirs):
           #
           (file, year) = VideoFiles.CleanName(file)
 
-          print "BABS: episodes: CleanName: file = |", file, "| year = |", year, "|"
+          logging.debug("BABS: episodes: CleanName: file = |%s| year = |%s|", file, year)
 
           # BABS -- And do it again, just in case the directory is off by things CleanName handles
           file = re.sub(show, 'X', file)
-          print "BABS: after CleanName, remove show, show = |", show, "| file = |", file, "|"
+          logging.debug("BABS: after CleanName, remove show, show = |%s| file = |%s|", show, file)
           
           for rx in just_episode_regexs:
             episode_match = re.search(rx, file, re.IGNORECASE)
             if episode_match is not None:
 
-              print "BABS: matched just_episode_regexs ", rx
+              logging.debug("BABS: matched just_episode_regexs %s", rx)
 
               the_episode = int(episode_match.group('ep'))
               the_season = 1
 
-              print "BABS: the_season =", the_season
-              print "BABS: show = |", show, "| the_episode =", the_episode
+              logging.debug("BABS: the_season =%s", the_season)
+              logging.debug("BABS: show = |%s| the_episode =%s", show, the_episode)
               
               # Now look for a season.
               if seasonNumber is not None:
                 the_season = seasonNumber
 
-                print "BABS: seasonNumber is not None, the_season = ", the_season
+                logging.debug("BABS: seasonNumber is not None, the_season = %s", the_season)
                 
                 # See if we accidentally parsed the episode as season.
                 if the_episode >= 100 and int(the_episode / 100) == the_season:
                   the_episode = the_episode % 100
 
-                  print "BABS: the_episode % 100 =", the_episode
+                  logging.debug("BABS: the_episode % 100 =%s", the_episode)
               
               tv_show = Media.Episode(show, the_season, the_episode, None, None)
               tv_show.parts.append(i)
@@ -385,7 +388,7 @@ def Scan(path, files, mediaList, subdirs):
               break
           
         if done == False:
-          print "Got nothing for:", file
+          logging.debug("Got nothing for:%s", file)
           
   # Stack the results.
   Stack.Scan(path, files, mediaList, subdirs)
@@ -399,9 +402,9 @@ def find_data(atom, name):
 import sys
     
 if __name__ == '__main__':
-  print "Hello, world!"
+  logging.debug("Hello, world!")
   path = sys.argv[1]
   files = [os.path.join(path, file) for file in os.listdir(path)]
   media = []
   Scan(path[1:], files, media, [])
-  print "Media:", media
+  logging.debug("Media:%s", media)
