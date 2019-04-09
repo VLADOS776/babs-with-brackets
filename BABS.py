@@ -1,4 +1,4 @@
-#
+﻿#
 # Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
 #
 # Better ABsolute Scanner based on default scanner code from PMS 0.9.3.5 for Ubuntu
@@ -22,7 +22,8 @@ import Media, VideoFiles, Stack, Utils
 from mp4file import mp4file, atomsearch
 
 LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", "..", "Logs"))
-logging.basicConfig(filename=os.path.join(LOG_PATH, 'BABS.log'), level=logging.DEBUG)
+# Change level to `logging.DEBUG` on debug
+logging.basicConfig(filename=os.path.join(LOG_PATH, 'BABS.log'), level=logging.INFO)
 
 episode_regexps = [
     '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*[eE](?P<ep>[0-9]+)([- ]?[Ee+](?P<secondEp>[0-9]+))?',                           # S03E04-E05
@@ -302,7 +303,7 @@ def Scan(path, files, mediaList, subdirs):
               endEpisode = episode
               if match.groupdict().has_key('secondEp') and match.group('secondEp'):
                 endEpisode = int(match.group('secondEp'))
-                
+
               # More validation for the weakest regular expression.
               if rx == episode_regexps[-1]:
                 
